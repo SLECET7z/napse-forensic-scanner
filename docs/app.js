@@ -71,6 +71,12 @@ function switchView(viewId) {
         if (viewId === 'admin-dashboard-view') {
             renderPinList();
             updateStats();
+            
+            // Only show reports tab to staff
+            const reportsTab = document.getElementById('reports-tab-btn');
+            if (reportsTab) {
+                reportsTab.style.display = currentUser.role === 'staff' ? 'block' : 'none';
+            }
         }
         if (typeof lucide !== 'undefined') lucide.createIcons();
     } else {
@@ -311,16 +317,18 @@ function renderReportsList() {
     if (!grid) return;
     grid.innerHTML = '';
 
-    const visibleReports = currentUser.role === 'staff' 
-        ? reports 
-        : reports.filter(r => r.owner === currentUser.username);
-
-    if (visibleReports.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No reports uploaded yet. Drag and drop your scanner .html reports here.</div>';
+    // STRICT PRIVACY: Only staff can see reports
+    if (currentUser.role !== 'staff') {
+        grid.innerHTML = '<div class="empty-state">Access Denied. Only Administrators can view forensic reports.</div>';
         return;
     }
 
-    visibleReports.slice().reverse().forEach(rep => {
+    if (reports.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No reports uploaded yet. Upload your scanner .html reports here.</div>';
+        return;
+    }
+
+    reports.slice().reverse().forEach(rep => {
         const card = document.createElement('div');
         card.className = 'report-card animate-in';
         card.onclick = () => viewReport(rep.id);
