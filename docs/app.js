@@ -53,15 +53,19 @@ window.addEventListener('resize', () => {
 
 // View Switching Logic
 function switchView(viewId) {
+    console.log('Switching to view:', viewId);
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const target = document.getElementById(viewId);
-    if (target) target.classList.remove('hidden');
-    
-    if (viewId === 'admin-dashboard-view') {
-        renderPinList();
-        updateStats();
+    if (target) {
+        target.classList.remove('hidden');
+        if (viewId === 'admin-dashboard-view') {
+            renderPinList();
+            updateStats();
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } else {
+        console.error('Target view not found:', viewId);
     }
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Authentication Logic
