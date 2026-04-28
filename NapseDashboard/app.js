@@ -279,21 +279,34 @@ async function triggerClientDownload() {
     }
 }
 
-// Tab Management
+// Sidebar & Tab Management
 function switchTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-    
+    // Update Sidebar
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     event.currentTarget.classList.add('active');
+
+    // Update Workspace View
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
     document.getElementById(`tab-${tabId}`).classList.remove('hidden');
     
+    // Update Header Text
+    const titles = {
+        'keys': { t: 'License Management', d: 'Manage and distribute system access keys.' },
+        'reports': { t: 'Forensic Intelligence', d: 'View and analyze scanned system data.' },
+        'settings': { t: 'System Settings', d: 'Configure your forensic workstation.' }
+    };
+    
+    document.getElementById('page-title').innerText = titles[tabId].t;
+    document.getElementById('page-desc').innerText = titles[tabId].d;
+
     if (tabId === 'reports') renderReportsList();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function copyDirectLink() {
     const directLink = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
     navigator.clipboard.writeText(directLink).then(() => {
-        alert('Direct EXE download link copied to clipboard!');
+        alert('Direct EXE link copied to clipboard!');
     });
 }
 
