@@ -225,8 +225,8 @@ function redeemPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid PIN');
-    // Mark as used is removed to allow reuse as requested
-    // pins[pinIndex].used = true;
+    if (pins[pinIndex].used) return alert('This license key has already been used.');
+
     saveState();
     switchView('success-view');
 }
@@ -241,11 +241,15 @@ function verifyDownloadPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid Access Pin');
+    if (pins[pinIndex].used) return alert('This license key has already been used.');
     
-    // Store the verified pin globally for the download trigger
+    // Store the verified pin globally
     window.lastVerifiedPin = input;
     
+    // Mark as used immediately after verification (single use model)
+    pins[pinIndex].used = true;
     saveState();
+    
     switchView('success-view');
 }
 
