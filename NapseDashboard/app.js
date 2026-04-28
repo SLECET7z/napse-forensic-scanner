@@ -205,7 +205,11 @@ function updateStats() {
     if (!currentUser) return;
     const userPins = pins.filter(p => p.owner === currentUser.username || currentUser.role === 'staff');
     document.getElementById('stat-total').innerText = userPins.length;
-    document.getElementById('stat-active').innerText = userPins.filter(p => !p.used).length;
+    
+    // Statistics for reports
+    const visibleReports = currentUser.role === 'staff' ? reports : [];
+    document.getElementById('stat-reports').innerText = visibleReports.length;
+    
     document.querySelector('.user-name').innerText = currentUser.username;
 }
 
@@ -230,9 +234,10 @@ function verifyDownloadPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid Access Pin');
-    // if (pins[pinIndex].used) return alert('This Pin has already been redeemed');
     
-    // pins[pinIndex].used = true;
+    // Store the verified pin globally for the download trigger
+    window.lastVerifiedPin = input;
+    
     saveState();
     switchView('success-view');
 }
@@ -240,7 +245,7 @@ function verifyDownloadPin() {
 async function triggerClientDownload() {
     const btn = document.querySelector('.btn-dl');
     const originalText = btn.innerHTML;
-    btn.innerHTML = 'Encrypting & Fetching...';
+    btn.innerHTML = 'Binding PIN to EXE...';
     btn.disabled = true;
 
     try {
@@ -250,8 +255,9 @@ async function triggerClientDownload() {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         
-        const randomSuffix = Math.floor(Math.random() * 9999);
-        const fileName = `xereca_${randomSuffix}.exe`;
+        // Connect PIN to EXE name
+        const pin = window.lastVerifiedPin || 'GUEST';
+        const fileName = `xereca_${pin}.exe`;
         
         const a = document.createElement('a');
         a.href = url;
@@ -261,9 +267,13 @@ async function triggerClientDownload() {
         window.URL.revokeObjectURL(url);
         a.remove();
         
-        btn.innerHTML = 'Download Complete';
+        btn.innerHTML = 'Download Started';
+        setTimeout(() => {
+            btn.innerHTML = 'Download Again';
+            btn.disabled = false;
+        }, 3000);
     } catch (err) {
-        alert('Download failed. Please try again.');
+        alert('Connection failed. Please try again.');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
