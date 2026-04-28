@@ -8,9 +8,6 @@ x64/
 *.db
 *.opendb
 
-# ImGui
-Esp Line free fire/imgui-master/
-
 # Misc
 *.exe
 *.dll

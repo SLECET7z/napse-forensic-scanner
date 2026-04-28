@@ -1,13 +1,5 @@
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "pch.h"
 #include "scanner.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
-#include <d3d11.h>
-#include <tchar.h>
-#include <dwmapi.h>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dwmapi.lib")

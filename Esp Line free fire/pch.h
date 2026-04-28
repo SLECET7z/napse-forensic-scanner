@@ -10,4 +10,17 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+#include <d3d11.h>
+#include <tchar.h>
+#include <dwmapi.h>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <thread>
+
 #endif //PCH_H
