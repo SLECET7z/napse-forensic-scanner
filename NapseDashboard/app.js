@@ -263,6 +263,88 @@ async function triggerClientDownload() {
     }
 }
 
+// Tab Management
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+    
+    event.currentTarget.classList.add('active');
+    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    
+    if (tabId === 'reports') renderReportsList();
+}
+
+function copyDirectLink() {
+    const directLink = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+    navigator.clipboard.writeText(directLink).then(() => {
+        alert('Direct EXE download link copied to clipboard!');
+    });
+}
+
+// Report Management
+let reports = JSON.parse(localStorage.getItem('napse_reports')) || [];
+
+function handleReportUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const report = {
+            id: 'REP-' + Math.floor(Math.random() * 100000),
+            name: file.name,
+            content: e.target.result,
+            date: new Date().toLocaleString(),
+            owner: currentUser.username
+        };
+        
+        reports.push(report);
+        localStorage.setItem('napse_reports', JSON.stringify(reports));
+        renderReportsList();
+        alert('Report uploaded successfully to dashboard!');
+    };
+    reader.readAsText(file);
+}
+
+function renderReportsList() {
+    const grid = document.getElementById('reports-list');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const visibleReports = currentUser.role === 'staff' 
+        ? reports 
+        : reports.filter(r => r.owner === currentUser.username);
+
+    if (visibleReports.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No reports uploaded yet. Drag and drop your scanner .html reports here.</div>';
+        return;
+    }
+
+    visibleReports.slice().reverse().forEach(rep => {
+        const card = document.createElement('div');
+        card.className = 'report-card animate-in';
+        card.onclick = () => viewReport(rep.id);
+        card.innerHTML = `
+            <div class="report-icon"><i data-lucide="file-text"></i></div>
+            <div class="report-name">${rep.name}</div>
+            <div class="report-date">${rep.date}</div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--accent);">Click to View Full Report</div>
+        `;
+        grid.appendChild(card);
+    });
+    lucide.createIcons();
+}
+
+function viewReport(reportId) {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+    
+    // Open the report content in a new window/tab
+    const win = window.open('', '_blank');
+    win.document.write(report.content);
+    win.document.close();
+}
+
 // Initial session check
 if (currentUser) {
     switchView('admin-dashboard-view');

@@ -152,25 +152,48 @@
                 </div>
 
                 <div class="dash-content">
-                    <div class="content-header">
-                        <h2>Key Management</h2>
-                        <button class="btn-sm" onclick="generatePin()">+ Generate Pin</button>
+                    <div class="dash-tabs">
+                        <button class="tab-btn active" onclick="switchTab('keys')">Key Management</button>
+                        <button class="tab-btn" onclick="switchTab('reports')">Forensic Reports</button>
                     </div>
 
-                    <div class="key-table-container">
-                        <table class="key-table">
-                            <thead>
-                                <tr>
-                                    <th>License Key</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pin-list-body">
-                                <!-- Dynamic Content -->
-                            </tbody>
-                        </table>
+                    <div id="tab-keys" class="tab-pane">
+                        <div class="content-header">
+                            <h2>Active Licenses</h2>
+                            <div class="header-actions">
+                                <button class="btn-sm secondary" onclick="copyDirectLink()">Copy Direct EXE Link</button>
+                                <button class="btn-sm" onclick="generatePin()">+ Generate Pin</button>
+                            </div>
+                        </div>
+
+                        <div class="key-table-container">
+                            <table class="key-table">
+                                <thead>
+                                    <tr>
+                                        <th>License Key</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pin-list-body">
+                                    <!-- Dynamic Content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="tab-reports" class="tab-pane hidden">
+                        <div class="content-header">
+                            <h2>Recent Scan Reports</h2>
+                            <button class="btn-sm" onclick="document.getElementById('report-upload').click()">+ Upload Report</button>
+                            <input type="file" id="report-upload" hidden accept=".html" onchange="handleReportUpload(event)">
+                        </div>
+                        
+                        <div class="reports-grid" id="reports-list">
+                            <!-- Reports will be injected here -->
+                            <div class="empty-state">No reports uploaded yet.</div>
+                        </div>
                     </div>
                 </div>
             </div>
