@@ -176,6 +176,25 @@
             </div>
         </div>
 
+        <!-- USER VIEW: DOWNLOAD VERIFICATION -->
+        <div id="download-verify-view" class="view hidden">
+            <div class="glass card animate-in">
+                <div class="logo">.NAPSE</div>
+                <div class="tagline">Verify Access to Download Client</div>
+                
+                <div class="input-group">
+                    <label>Enter Access Pin</label>
+                    <input type="text" id="download-pin-input" placeholder="NAPS-XXXX-XXXX">
+                </div>
+
+                <button class="btn" onclick="verifyDownloadPin()" style="background: var(--accent); color: white;">
+                    Verify & Download <i data-lucide="download"></i>
+                </button>
+
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-dim);">Don't have a pin? <span class="link" style="color: var(--accent);" onclick="switchView('redeem-view')">Back to Home</span></p>
+            </div>
+        </div>
+
         <!-- SUCCESS VIEW: DOWNLOAD -->
         <div id="success-view" class="view hidden">
             <div class="glass card success-card animate-in">
@@ -190,7 +209,7 @@
                         <span class="dl-name">Scanner.exe</span>
                         <span class="dl-meta">SHA256: 76e48bf9... • Windows 10/11</span>
                     </div>
-                    <button class="btn-dl shimmer" onclick="handleDownload()">Download Client</button>
+                    <button class="btn-dl shimmer" onclick="triggerClientDownload()">Download Client</button>
                 </div>
 
                 <p class="warning-text"><i data-lucide="alert-triangle"></i> This link is valid for a single use only.</p>

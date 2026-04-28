@@ -188,10 +188,27 @@ function redeemPin() {
 }
 
 function handleDownload() {
+    // Show verification view instead of immediate download
+    switchView('download-verify-view');
+}
+
+function verifyDownloadPin() {
+    const input = document.getElementById('download-pin-input').value.trim().toUpperCase();
+    const pinIndex = pins.findIndex(p => p.key === input);
+    
+    if (pinIndex === -1) return alert('Invalid Access Pin');
+    if (pins[pinIndex].used) return alert('This Pin has already been redeemed');
+    
+    // Mark as used and show success
+    pins[pinIndex].used = true;
+    saveState();
+    switchView('success-view');
+}
+
+function triggerClientDownload() {
     // In production, this points to the EXE in the release folder
-    // For local testing, we'll simulate the download trigger
     const link = document.createElement('a');
-    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/latest/Scanner.exe';
+    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/Scanner.exe';
     link.download = 'Scanner.exe';
     document.body.appendChild(link);
     link.click();

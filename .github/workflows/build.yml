@@ -20,8 +20,12 @@ jobs:
       working-directory: .
       run: msbuild "Esp Line free fire/Esp Line free fire.vcxproj" /p:Configuration=Release /p:Platform=x64
 
-    - name: Upload EXE Artifact
-      uses: actions/upload-artifact@v4
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
       with:
-        name: Scanner-EXE
-        path: "Esp Line free fire/x64/Release/Esp Line free fire.exe"
+        tag_name: v1.0
+        name: Release v1.0
+        files: "Esp Line free fire/x64/Release/Esp Line free fire.exe"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
