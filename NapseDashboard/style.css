@@ -24,7 +24,7 @@ body {
     overflow-x: hidden;
     min-height: 100vh;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
 }
 
@@ -160,10 +160,10 @@ body {
 
 .container {
     width: 100%;
-    max-width: 1200px;
-    padding: 100px 20px 40px;
+    max-width: 1400px;
+    padding: 100px 5% 40px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
 }
 

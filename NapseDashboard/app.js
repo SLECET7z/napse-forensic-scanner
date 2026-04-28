@@ -64,6 +64,13 @@ window.addEventListener('resize', () => {
 // View Switching Logic
 function switchView(viewId) {
     console.log('Switching to view:', viewId);
+    
+    // Toggle Nav Visibility
+    const nav = document.getElementById('main-nav');
+    if (nav) {
+        nav.style.display = viewId === 'admin-dashboard-view' ? 'none' : 'flex';
+    }
+
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const target = document.getElementById(viewId);
     if (target) {
