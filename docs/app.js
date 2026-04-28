@@ -386,4 +386,7 @@ function viewReport(reportId) {
 // Initial session check
 if (currentUser) {
     switchView('admin-dashboard-view');
+} else {
+    // Show nothing by default (just matrix background)
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
 }

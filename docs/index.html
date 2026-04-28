@@ -27,15 +27,15 @@
                 <a href="#"><i data-lucide="message-square"></i></a>
             </div>
             <div class="nav-actions">
-                <button class="btn-nav-dl" onclick="handleDownload()"><i data-lucide="download"></i> Download</button>
+                <button class="btn-nav-dl" onclick="switchView('download-verify-view')"><i data-lucide="download"></i> Download</button>
                 <button class="btn-nav-login" onclick="switchView('login-view')">Login <i data-lucide="arrow-right"></i></button>
             </div>
         </div>
     </nav>
 
     <div class="container" id="main-container">
-        <!-- USER VIEW: REDEEM PIN -->
-        <div id="redeem-view" class="view">
+        <!-- USER VIEW: REDEEM PIN (HIDDEN BY DEFAULT) -->
+        <div id="redeem-view" class="view hidden">
             <div class="glass card animate-in">
                 <div class="logo">.NAPSE</div>
                 <div class="tagline">Next-Gen Forensic Architecture</div>
