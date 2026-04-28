@@ -5,6 +5,16 @@ let users = JSON.parse(localStorage.getItem('napse_users')) || [
 ];
 let currentUser = JSON.parse(sessionStorage.getItem('napse_session')) || null;
 
+// Handle Shareable Links
+const urlParams = new URLSearchParams(window.location.search);
+const sharedPin = urlParams.get('pin');
+if (sharedPin) {
+    window.onload = () => {
+        switchView('download-verify-view');
+        document.getElementById('download-pin-input').value = sharedPin;
+    };
+}
+
 function saveState() {
     localStorage.setItem('napse_pins', JSON.stringify(pins));
     localStorage.setItem('napse_users', JSON.stringify(users));
@@ -153,15 +163,29 @@ function renderPinList() {
         : pins.filter(p => p.owner === currentUser.username);
 
     visiblePins.slice().reverse().forEach(pin => {
+        const shareLink = `${window.location.origin}${window.location.pathname}?pin=${pin.key}`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${pin.key}</td>
             <td><span class="tag ${pin.used ? 'tag-used' : 'tag-active'}">${pin.used ? 'Used' : 'Active'}</span></td>
             <td>${pin.created}</td>
-            <td>${pin.owner === currentUser.username || currentUser.role === 'staff' ? `<span class="link" onclick="deletePin('${pin.key}')">Remove</span>` : ''}</td>
+            <td style="display: flex; gap: 1rem; align-items: center;">
+                <button class="btn-sm" style="background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 0.4rem 0.8rem;" onclick="copyToClipboard('${shareLink}')">Copy Link</button>
+                ${pin.owner === currentUser.username || currentUser.role === 'staff' ? `<span class="link" style="font-size: 0.7rem;" onclick="deletePin('${pin.key}')">Remove</span>` : ''}
+            </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+function copyToClipboard(text) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Shareable link copied to clipboard!');
 }
 
 function deletePin(key) {
@@ -207,16 +231,36 @@ function verifyDownloadPin() {
     switchView('success-view');
 }
 
-function triggerClientDownload() {
-    const randomSuffix = Math.floor(Math.random() * 9999);
-    const fileName = `xereca_${randomSuffix}.exe`;
-    
-    const link = document.createElement('a');
-    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+async function triggerClientDownload() {
+    const btn = document.querySelector('.btn-dl');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Encrypting & Fetching...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe');
+        if (!response.ok) throw new Error('Download failed');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const randomSuffix = Math.floor(Math.random() * 9999);
+        const fileName = `xereca_${randomSuffix}.exe`;
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        
+        btn.innerHTML = 'Download Complete';
+    } catch (err) {
+        alert('Download failed. Please try again.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
 
 // Initial session check
