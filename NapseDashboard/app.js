@@ -8,10 +8,27 @@ let currentUser = JSON.parse(sessionStorage.getItem('napse_session')) || null;
 // Handle Shareable Links
 const urlParams = new URLSearchParams(window.location.search);
 const sharedPin = urlParams.get('pin');
-if (sharedPin) {
+const reportData = urlParams.get('report');
+
+if (reportData) {
     window.onload = () => {
-        switchView('download-verify-view');
-        document.getElementById('download-pin-input').value = sharedPin;
+        const decoded = atob(reportData);
+        const viewer = document.getElementById('report-viewer-content');
+        if (viewer) {
+            viewer.innerHTML = decoded;
+            switchView('report-viewer-view');
+        }
+    };
+} else if (sharedPin) {
+    window.onload = () => {
+        const pin = pins.find(p => p.key === sharedPin);
+        if (pin && pin.used) {
+            alert('This forensic link has expired.');
+            switchView('login-view');
+        } else {
+            switchView('download-verify-view');
+            document.getElementById('download-pin-input').value = sharedPin;
+        }
     };
 }
 
@@ -241,7 +258,11 @@ function verifyDownloadPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid Access Pin');
-    if (pins[pinIndex].used) return alert('This license key has already been used.');
+    if (pins[pinIndex].used) {
+        alert('This license key has already been used.');
+        window.location.href = window.location.pathname; // Clear URL
+        return;
+    }
     
     // Store the verified pin globally
     window.lastVerifiedPin = input;
@@ -263,7 +284,7 @@ async function triggerClientDownload() {
         // Direct link is more reliable for large binaries and avoids CORS issues
         const pin = window.lastVerifiedPin || 'GUEST';
         const fileName = `xereca_${pin}.exe`;
-        const downloadUrl = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+        const downloadUrl = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.1/xereca.exe';
 
         // Use a temporary link to trigger the download
         const a = document.createElement('a');
@@ -346,35 +367,53 @@ function handleReportUpload(event) {
     reader.readAsText(file);
 }
 
-function renderReportsList() {
+async function renderReportsList() {
     const grid = document.getElementById('reports-list');
     if (!grid) return;
-    grid.innerHTML = '';
-
+    
     // STRICT PRIVACY: Only staff can see reports
     if (currentUser.role !== 'staff') {
-        grid.innerHTML = '<div class="empty-state">Access Denied. Only Administrators can view forensic reports.</div>';
+        grid.innerHTML = '<div class="empty-state">Access Denied. Access Level Alpha required.</div>';
         return;
     }
 
-    if (reports.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No reports uploaded yet. Upload your scanner .html reports here.</div>';
-        return;
-    }
+    grid.innerHTML = '<div class="empty-state">Decrypting forensic data from cloud...</div>';
 
-    reports.slice().reverse().forEach(rep => {
-        const card = document.createElement('div');
-        card.className = 'report-card animate-in';
-        card.onclick = () => viewReport(rep.id);
-        card.innerHTML = `
-            <div class="report-icon"><i data-lucide="file-text"></i></div>
-            <div class="report-name">${rep.name}</div>
-            <div class="report-date">${rep.date}</div>
-            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--accent);">Click to View Full Report</div>
-        `;
-        grid.appendChild(card);
-    });
-    lucide.createIcons();
+    try {
+        const response = await fetch('https://api.github.com/repos/SLECET7z/napse-forensic-scanner/contents/reports');
+        if (!response.ok) throw new Error('Cloud Offline');
+        
+        const files = await response.json();
+        const htmlFiles = files.filter(f => f.name.endsWith('.html'));
+
+        if (htmlFiles.length === 0) {
+            grid.innerHTML = '<div class="empty-state">No forensic reports recovered from cloud.</div>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        htmlFiles.slice().reverse().forEach(file => {
+            const card = document.createElement('div');
+            card.className = 'report-card animate-in';
+            card.onclick = () => window.open(file.download_url, '_blank');
+            card.innerHTML = `
+                <div class="report-icon"><i data-lucide="file-text"></i></div>
+                <div class="report-info">
+                    <div class="report-name">${file.name}</div>
+                    <div class="report-date">Cloud Stored Artifact</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--accent);">Verified Intelligence</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        // Update Stats
+        document.getElementById('stat-reports').innerText = htmlFiles.length;
+    } catch (err) {
+        console.error('Fetch Error:', err);
+        grid.innerHTML = '<div class="empty-state">Connection to Secure Vault failed. Check system logs.</div>';
+    }
 }
 
 function viewReport(reportId) {

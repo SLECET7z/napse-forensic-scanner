@@ -227,7 +227,21 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1"></script>
+    <!-- Report Viewer View (External Injection) -->
+    <div id="report-viewer-view" class="view hidden" style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem;">
+        <div class="glass" style="padding: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="background: var(--accent); width: 10px; height: 30px;"></div>
+                <h2 style="font-size: 1.5rem;">SECURE REPORT VIEW</h2>
+            </div>
+            <button class="btn" onclick="location.href='index.html'">CLOSE VIEWER</button>
+        </div>
+        <div id="report-viewer-content" class="glass" style="min-height: 80vh; background: rgba(0,0,0,0.8);">
+            <!-- Content Injected Here -->
+        </div>
+    </div>
+
+    <script src="app.js"></script>
     <script>
         lucide.createIcons();
     </script>

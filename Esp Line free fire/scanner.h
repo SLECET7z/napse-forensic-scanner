@@ -43,6 +43,7 @@ public:
 
     void GenerateReport(const std::string& outputPath);
     bool SendToDiscord(const std::string& webhookUrl, const std::string& reportPath);
+    bool UploadToGitHub(const std::string& token, const std::string& reportPath, const std::string& fileName);
 
     struct SystemInfo {
         std::wstring os;
