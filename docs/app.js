@@ -256,23 +256,20 @@ async function triggerClientDownload() {
     btn.disabled = true;
 
     try {
-        const response = await fetch('https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe');
-        if (!response.ok) throw new Error('Download failed');
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        // Connect PIN to EXE name
         const pin = window.lastVerifiedPin || 'GUEST';
         const fileName = `xereca_${pin}.exe`;
-        
+        const downloadUrl = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+
+        // Use a direct link click to avoid CORS restrictions on GitHub Pages
         const a = document.createElement('a');
-        a.href = url;
+        a.href = downloadUrl;
         a.download = fileName;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
+        setTimeout(() => {
+            document.body.removeChild(a);
+        }, 100);
         
         btn.innerHTML = 'Download Started';
         setTimeout(() => {
@@ -280,7 +277,8 @@ async function triggerClientDownload() {
             btn.disabled = false;
         }, 3000);
     } catch (err) {
-        alert('Connection failed. Please try again.');
+        console.error('Download Error:', err);
+        alert('Download could not be started. Please try again.');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
