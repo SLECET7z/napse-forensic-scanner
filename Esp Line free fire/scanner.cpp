@@ -529,8 +529,51 @@ void Scanner::GenerateReport(const std::string& outputPath) {
     out << html;
     out.close();
 
-    // Open in browser without forcing a new window if possible
+    // Open in browser
     ShellExecuteA(NULL, "open", outputPath.c_str(), NULL, NULL, SW_SHOW);
+}
+
+bool Scanner::SendToDiscord(const std::string& webhookUrl, const std::string& reportPath) {
+    if (webhookUrl.empty()) return false;
+
+    // Read report file
+    std::ifstream file(reportPath, std::ios::binary);
+    if (!file.is_open()) return false;
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+
+    // Setup multipart/form-data
+    std::string boundary = "----NapseBoundary" + std::to_string(GetTickCount());
+    std::string body = "--" + boundary + "\r\n";
+    body += "Content-Disposition: form-data; name=\"file\"; filename=\"report.html\"\r\n";
+    body += "Content-Type: text/html\r\n\r\n";
+    body += content + "\r\n";
+    body += "--" + boundary + "--\r\n";
+
+    // URL Parsing (Simplistic)
+    size_t hostPos = webhookUrl.find("discord.com");
+    if (hostPos == std::string::npos) return false;
+    std::wstring wUrl = std::wstring(webhookUrl.begin() + hostPos + 11, webhookUrl.end());
+
+    HINTERNET hSession = WinHttpOpen(L"Napse Forensic / 1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (!hSession) return false;
+
+    HINTERNET hConnect = WinHttpConnect(hSession, L"discord.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
+    if (!hConnect) { WinHttpCloseHandle(hSession); return false; }
+
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", wUrl.c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    if (hRequest) {
+        std::wstring header = L"Content-Type: multipart/form-data; boundary=" + std::wstring(boundary.begin(), boundary.end());
+        WinHttpAddRequestHeaders(hRequest, header.c_str(), -1L, WINHTTP_ADDREQ_FLAG_ADD);
+
+        WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, (LPVOID)body.c_str(), (DWORD)body.length(), (DWORD)body.length(), 0);
+        WinHttpReceiveResponse(hRequest, NULL);
+        WinHttpCloseHandle(hRequest);
+    }
+
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    return true;
 }
 
 void Scanner::ScanAllDrives() {

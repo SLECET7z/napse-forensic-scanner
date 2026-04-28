@@ -42,6 +42,7 @@ public:
     const std::vector<FileResult>& GetFiles() const { return m_Files; }
 
     void GenerateReport(const std::string& outputPath);
+    bool SendToDiscord(const std::string& webhookUrl, const std::string& reportPath);
 
     struct SystemInfo {
         std::wstring os;

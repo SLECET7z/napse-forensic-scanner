@@ -200,12 +200,20 @@ int main(int, char**) {
                         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.2f);
                         ImGui::PushStyleColor(ImGuiCol_Border, (ImVec4)ImColor(168, 85, 247, 120));
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
-                        if (ImGui::Button("Start", ImVec2(150, 50))) {
+                        static char webhookBuf[256] = "";
+                        ImGui::SetNextItemWidth(150);
+                        ImGui::InputTextWithHint("##webhook", "Discord Webhook", webhookBuf, 256);
+                        
+                        if (ImGui::Button("Start Scan", ImVec2(150, 40))) {
                             g_Scanning = true;
-                            std::thread([]() { 
+                            std::string webhook(webhookBuf);
+                            std::thread([webhook]() { 
                                 g_Scanner.StartScan(); 
                                 g_Scanning = false;
-                                g_Scanner.GenerateReport("ocean_report.html");
+                                g_Scanner.GenerateReport("report.html");
+                                if (!webhook.empty()) {
+                                    g_Scanner.SendToDiscord(webhook, "report.html");
+                                }
                             }).detach();
                         }
                         ImGui::PopStyleColor(2);
