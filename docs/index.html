@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.NAPSE | Forensic Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="background-overlay"></div>
+
+    <nav class="floating-nav" id="main-nav">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <img src="https://cdn-icons-png.flaticon.com/512/1063/1063191.png" alt="Logo" class="mini-logo">
+            </div>
+            <div class="nav-links">
+                <a href="#"><i data-lucide="dollar-sign"></i> Pricing</a>
+                <a href="#"><i data-lucide="zap"></i> Features</a>
+                <a href="#"><i data-lucide="book-open"></i> Guide</a>
+                <a href="#"><i data-lucide="file-text"></i> ToS</a>
+                <a href="#"><i data-lucide="shield"></i> Privacy</a>
+                <a href="#"><i data-lucide="refresh-cw"></i> Updates</a>
+                <a href="#"><i data-lucide="message-square"></i></a>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-nav-dl" onclick="switchView('download-verify-view')"><i data-lucide="download"></i> Download</button>
+                <button class="btn-nav-login" onclick="switchView('login-view')">Login <i data-lucide="arrow-right"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="main-container">
+        <!-- Views will be toggled via Top Navigation -->
+
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="view hidden">
+            <div class="glass card animate-in">
+                <div class="view-header">
+                    <span class="back-btn" onclick="switchView('redeem-view')"><i data-lucide="chevron-left"></i></span>
+                    <h3>Account Login</h3>
+                </div>
+                
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="login-user" placeholder="forensic_expert">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-pass" placeholder="••••••••">
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1.5rem;">
+                    <button class="btn primary" onclick="handleLogin()" style="width: 100%;">Sign In</button>
+                    <div style="text-align: center; font-size: 0.7rem; color: rgba(255,255,255,0.3);">OR</div>
+                    <button class="btn secondary" onclick="loginWithDiscord()" style="width: 100%; background: #5865F2; border: none; color: white;">
+                        <i data-lucide="message-square"></i> Authorize Discord
+                    </button>
+                </div>
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-dim);">Don't have an account? <span class="link" style="color: var(--accent);" onclick="switchView('register-view')">Register</span></p>
+            </div>
+        </div>
+
+        <!-- REGISTER VIEW -->
+        <div id="register-view" class="view hidden">
+            <div class="glass card animate-in">
+                <div class="view-header">
+                    <span class="back-btn" onclick="switchView('redeem-view')"><i data-lucide="chevron-left"></i></span>
+                    <h3>Create Account</h3>
+                </div>
+                
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="reg-user" placeholder="forensic_expert">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-pass" placeholder="••••••••">
+                </div>
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="reg-pass-confirm" placeholder="••••••••">
+                </div>
+                
+                <button class="btn primary" onclick="handleRegister()">Register Account</button>
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-dim);">Already have an account? <span class="link" style="color: var(--accent);" onclick="switchView('login-view')">Login</span></p>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD VIEW (PREMIUM SIDEBAR LAYOUT) -->
+        <div id="admin-dashboard-view" class="view dashboard-layout hidden">
+            <aside class="sidebar glass">
+                <div class="sidebar-brand">.NAPSE</div>
+                
+                <nav class="sidebar-nav">
+                    <div class="nav-item active" onclick="switchTab('keys')">
+                        <i data-lucide="key"></i> <span>Licenses</span>
+                    </div>
+                    <div class="nav-item" id="reports-tab-btn" onclick="switchTab('reports')">
+                        <i data-lucide="file-text"></i> <span>Reports</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('settings')">
+                        <i data-lucide="settings"></i> <span>Settings</span>
+                    </div>
+                </nav>
+
+                <div class="sidebar-user">
+                    <div class="user-info">
+                        <div class="user-avatar"><i data-lucide="user"></i></div>
+                        <div class="user-details">
+                            <span class="user-name">Root Admin</span>
+                            <span class="user-role">Administrator</span>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="workspace">
+                <header class="workspace-top">
+                    <div class="page-info">
+                        <h1 id="page-title">License Management</h1>
+                        <p id="page-desc">System authority level: Alpha</p>
+                    </div>
+                    <div class="global-stats">
+                        <div class="g-stat">
+                            <div class="g-val" id="stat-total">0</div>
+                            <div class="g-lbl">TOTAL KEYS</div>
+                        </div>
+                        <div class="g-stat">
+                            <div class="g-val" id="stat-reports">0</div>
+                            <div class="g-lbl">REPORTS</div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="page-content">
+                    <!-- LICENSES TAB -->
+                    <div id="tab-keys" class="tab-pane">
+                        <div class="toolbar">
+                            <button class="btn primary" onclick="generatePin()">+ Generate New Pin</button>
+                        </div>
+                        <div class="table-container glass">
+                            <table class="key-table">
+                                <thead>
+                                    <tr>
+                                        <th>LICENSE KEY</th>
+                                        <th>STATUS</th>
+                                        <th>TIMESTAMP</th>
+                                        <th>OPERATIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pin-list-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- REPORTS TAB -->
+                    <div id="tab-reports" class="tab-pane hidden">
+                        <div class="toolbar">
+                            <button class="btn primary" onclick="document.getElementById('report-upload').click()">+ Upload Scanner Data</button>
+                            <input type="file" id="report-upload" hidden accept=".html" onchange="handleReportUpload(event)">
+                        </div>
+                        <div class="reports-grid" id="reports-list"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- USER VIEW: DOWNLOAD VERIFICATION -->
+        <div id="download-verify-view" class="view hidden">
+            <div class="glass card animate-in">
+                <div class="logo">.NAPSE</div>
+                <div class="tagline">Verify Access to Download Client</div>
+                
+                <div class="input-group">
+                    <label>Enter Access Pin</label>
+                    <input type="text" id="download-pin-input" placeholder="NAPS-XXXX-XXXX">
+                </div>
+
+                <button class="btn" onclick="verifyDownloadPin()" style="background: var(--accent); color: white;">
+                    Verify & Download <i data-lucide="download"></i>
+                </button>
+
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-dim);">Don't have a pin? <span class="link" style="color: var(--accent);" onclick="location.reload()">Back to Home</span></p>
+            </div>
+        </div>
+
+        <!-- SUCCESS VIEW: DOWNLOAD -->
+        <div id="success-view" class="view hidden">
+            <div class="glass card success-card animate-in">
+                <div class="success-icon">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <h2>Access Granted</h2>
+                <p class="success-msg">Your license has been verified. You may now download the forensic client.</p>
+                
+                <div class="download-box">
+                    <div class="dl-info">
+                        <span class="dl-name">Scanner.exe</span>
+                        <span class="dl-meta">SHA256: 76e48bf9... • Windows 10/11</span>
+                    </div>
+                    <button class="btn-dl shimmer" onclick="triggerClientDownload()">Download Client</button>
+                </div>
+
+                <p class="warning-text"><i data-lucide="alert-triangle"></i> This link is valid for a single use only.</p>
+                
+                <span class="link" onclick="location.reload()" style="margin-top: 2rem;">Return to Login</span>
+            </div>
+        </div>
+
+        <!-- Report Viewer View (External Injection) -->
+        <div id="report-viewer-view" class="view hidden" style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1000;">
+            <div class="glass" style="padding: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="background: var(--accent); width: 10px; height: 30px;"></div>
+                    <h2 style="font-size: 1.5rem;">SECURE REPORT VIEW</h2>
+                </div>
+                <button class="btn" onclick="location.href='index.html'">CLOSE VIEWER</button>
+            </div>
+            <div id="report-viewer-content" class="glass" style="min-height: 80vh; background: rgba(0,0,0,0.8); overflow-y: auto; padding: 2rem;">
+                <!-- Content Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
