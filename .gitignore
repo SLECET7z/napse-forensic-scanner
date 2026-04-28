@@ -1,0 +1,19 @@
+# Visual Studio
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+*.user
+*.suo
+*.db
+*.opendb
+
+# ImGui
+Esp Line free fire/imgui-master/
+
+# Misc
+*.exe
+*.dll
+*.pdb
+*.log
+!docs/*.exe

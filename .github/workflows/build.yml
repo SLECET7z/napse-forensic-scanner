@@ -1,0 +1,27 @@
+name: Build Scanner EXE
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build Solution
+      working-directory: .
+      run: msbuild "Esp Line free fire/Esp Line free fire.vcxproj" /p:Configuration=Release /p:Platform=x64
+
+    - name: Upload EXE Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Scanner-EXE
+        path: "Esp Line free fire/x64/Release/Esp Line free fire.exe"
