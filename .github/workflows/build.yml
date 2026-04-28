@@ -23,12 +23,16 @@ jobs:
       working-directory: .
       run: msbuild "Esp Line free fire/Esp Line free fire.vcxproj" /p:Configuration=Release /p:Platform=x64
 
+    - name: Rename EXE
+      run: |
+        mv "Esp Line free fire/x64/Release/Esp Line free fire.exe" "Esp Line free fire/x64/Release/xereca.exe"
+
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v1.0
         name: Release v1.0
-        files: "Esp Line free fire/x64/Release/Esp Line free fire.exe"
+        files: "Esp Line free fire/x64/Release/xereca.exe"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

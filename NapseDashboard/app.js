@@ -184,9 +184,8 @@ function redeemPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid PIN');
-    if (pins[pinIndex].used) return alert('PIN already redeemed');
-    
-    pins[pinIndex].used = true;
+    // Mark as used is removed to allow reuse as requested
+    // pins[pinIndex].used = true;
     saveState();
     switchView('success-view');
 }
@@ -201,19 +200,20 @@ function verifyDownloadPin() {
     const pinIndex = pins.findIndex(p => p.key === input);
     
     if (pinIndex === -1) return alert('Invalid Access Pin');
-    if (pins[pinIndex].used) return alert('This Pin has already been redeemed');
+    // if (pins[pinIndex].used) return alert('This Pin has already been redeemed');
     
-    // Mark as used and show success
-    pins[pinIndex].used = true;
+    // pins[pinIndex].used = true;
     saveState();
     switchView('success-view');
 }
 
 function triggerClientDownload() {
-    // In production, this points to the EXE in the release folder
+    const randomSuffix = Math.floor(Math.random() * 9999);
+    const fileName = `xereca_${randomSuffix}.exe`;
+    
     const link = document.createElement('a');
-    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/Scanner.exe';
-    link.download = 'Scanner.exe';
+    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
