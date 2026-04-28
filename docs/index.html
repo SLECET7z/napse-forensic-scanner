@@ -43,14 +43,14 @@
                 <div id="auth-options">
                     <button class="btn primary" onclick="switchView('login-view')">Login to Account</button>
                     <button class="btn secondary" style="margin-top: 1rem;" onclick="switchView('register-view')">Create New Account</button>
-                    <div class="divider"><span>OR REDEEM GUEST KEY</span></div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group" style="margin-top: 2rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Redeem Access Pin</label>
                     <input type="text" id="pin-input" placeholder="NAPS-XXXX-XXXX" maxlength="14">
                 </div>
                 
-                <button class="btn" style="background: rgba(255,255,255,0.05);" onclick="redeemPin()">Redeem Access Pin</button>
+                <button class="btn" style="background: var(--accent); color: white;" onclick="redeemPin()">Unlock Client</button>
                 
                 <div class="footer-links">
                     <span class="link" onclick="switchView('admin-login-view')">Staff Login</span>
