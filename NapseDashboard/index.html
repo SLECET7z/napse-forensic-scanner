@@ -9,8 +9,29 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div class="background"></div>
-    <div class="glow-orb"></div>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="background-overlay"></div>
+
+    <nav class="floating-nav">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <img src="https://www.napse.ac/favicon.ico" alt="Logo" class="mini-logo">
+            </div>
+            <div class="nav-links">
+                <a href="#"><i data-lucide="dollar-sign"></i> Pricing</a>
+                <a href="#"><i data-lucide="zap"></i> Features</a>
+                <a href="#"><i data-lucide="book-open"></i> Guide</a>
+                <a href="#"><i data-lucide="file-text"></i> ToS</a>
+                <a href="#"><i data-lucide="shield"></i> Privacy</a>
+                <a href="#"><i data-lucide="refresh-cw"></i> Updates</a>
+                <a href="#"><i data-lucide="message-square"></i></a>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-nav-dl" onclick="handleDownload()"><i data-lucide="download"></i> Download</button>
+                <button class="btn-nav-login" onclick="switchView('login-view')">Login <i data-lucide="arrow-right"></i></button>
+            </div>
+        </div>
+    </nav>
 
     <div class="container" id="main-container">
         <!-- USER VIEW: REDEEM PIN -->

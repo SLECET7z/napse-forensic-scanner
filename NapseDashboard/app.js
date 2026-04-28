@@ -1,36 +1,67 @@
 // Database Simulation using localStorage
-let pins = JSON.parse(localStorage.getItem('napse_pins')) || [
-    { key: 'NAPS-1234-5678', used: false, created: new Date().toLocaleDateString(), owner: 'system' }
-];
-
+let pins = JSON.parse(localStorage.getItem('napse_pins')) || [];
 let users = JSON.parse(localStorage.getItem('napse_users')) || [
     { username: 'admin', password: '123', role: 'staff' }
 ];
-
-let currentUser = null;
+let currentUser = JSON.parse(sessionStorage.getItem('napse_session')) || null;
 
 function saveState() {
     localStorage.setItem('napse_pins', JSON.stringify(pins));
     localStorage.setItem('napse_users', JSON.stringify(users));
 }
 
+// Matrix Animation Logic
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@&%*';
+const fontSize = 14;
+const columns = width / fontSize;
+const drops = [];
+
+for (let i = 0; i < columns; i++) {
+    drops[i] = 1;
+}
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(3, 3, 3, 0.05)';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#8b5cf6'; // Purple rain
+    ctx.font = fontSize + 'px JetBrains Mono';
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = characters.charAt(Math.floor(Math.random() * characters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 50);
+
+window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
+
 // View Switching Logic
 function switchView(viewId) {
-    document.querySelectorAll('.view').forEach(v => {
-        v.classList.add('hidden');
-    });
-    
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const target = document.getElementById(viewId);
-    target.classList.remove('hidden');
+    if (target) target.classList.remove('hidden');
     
-    if (viewId === 'admin-dashboard-view' || viewId === 'user-dashboard-view') {
+    if (viewId === 'admin-dashboard-view') {
         renderPinList();
         updateStats();
     }
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Authentication Logic
@@ -43,9 +74,15 @@ function handleRegister() {
     if (pass !== confirm) return alert('Passwords do not match');
     if (users.find(u => u.username === user)) return alert('Username already exists');
 
-    users.push({ username: user, password: pass, role: 'user' });
+    users.push({ 
+        username: user, 
+        password: pass, 
+        role: 'user',
+        daily_count: 0,
+        last_gen_date: null
+    });
     saveState();
-    alert('Account created successfully! You can now login.');
+    alert('Account created! Please login.');
     switchView('login-view');
 }
 
@@ -54,31 +91,29 @@ function handleLogin() {
     const pass = document.getElementById('login-pass').value;
 
     const found = users.find(u => u.username === user && u.password === pass);
-    if (!found) return alert('Invalid username or password');
+    if (!found) return alert('Invalid credentials');
 
     currentUser = found;
-    if (found.role === 'staff') {
-        switchView('admin-dashboard-view');
-    } else {
-        // We'll reuse the dashboard for users but filter content
-        switchView('admin-dashboard-view');
-    }
+    sessionStorage.setItem('napse_session', JSON.stringify(currentUser));
+    switchView('admin-dashboard-view');
 }
 
-function adminLogin() {
-    const pass = document.getElementById('admin-pass').value;
-    const found = users.find(u => u.role === 'staff' && u.password === pass);
-    if (found) {
-        currentUser = found;
-        switchView('admin-dashboard-view');
-    } else {
-        alert('Invalid Access Secret');
-    }
-}
-
-// PIN Management
+// PIN Management with Daily Limit
 function generatePin() {
     if (!currentUser) return;
+
+    // Check Daily Limit (2 Pins per day)
+    const today = new Date().toLocaleDateString();
+    const userIdx = users.findIndex(u => u.username === currentUser.username);
+    
+    if (users[userIdx].last_gen_date !== today) {
+        users[userIdx].daily_count = 0;
+        users[userIdx].last_gen_date = today;
+    }
+
+    if (users[userIdx].daily_count >= 2 && currentUser.role !== 'staff') {
+        return alert('Daily limit reached (2 PINs per day). Please return tomorrow.');
+    }
 
     const segments = [];
     for (let i = 0; i < 2; i++) {
@@ -89,21 +124,27 @@ function generatePin() {
     pins.push({
         key: newKey,
         used: false,
-        created: new Date().toLocaleDateString(),
+        created: today,
         owner: currentUser.username
     });
     
+    users[userIdx].daily_count++;
     saveState();
     renderPinList();
     updateStats();
+
+    // Auto Download on Creation
+    setTimeout(() => {
+        handleDownload();
+    }, 1000);
 }
 
 function renderPinList() {
     const tbody = document.getElementById('pin-list-body');
+    if (!tbody) return;
     tbody.innerHTML = '';
     
-    // Filter pins based on user role
-    const visiblePins = currentUser && currentUser.role === 'staff' 
+    const visiblePins = currentUser.role === 'staff' 
         ? pins 
         : pins.filter(p => p.owner === currentUser.username);
 
@@ -128,22 +169,18 @@ function deletePin(key) {
 
 function updateStats() {
     if (!currentUser) return;
-    
     const userPins = pins.filter(p => p.owner === currentUser.username || currentUser.role === 'staff');
     document.getElementById('stat-total').innerText = userPins.length;
     document.getElementById('stat-active').innerText = userPins.filter(p => !p.used).length;
-    
-    // Update display name
     document.querySelector('.user-name').innerText = currentUser.username;
 }
 
-// Redemption Logic
 function redeemPin() {
     const input = document.getElementById('pin-input').value.trim().toUpperCase();
     const pinIndex = pins.findIndex(p => p.key === input);
     
-    if (pinIndex === -1) return alert('Invalid Access Pin');
-    if (pins[pinIndex].used) return alert('This Pin has already been redeemed');
+    if (pinIndex === -1) return alert('Invalid PIN');
+    if (pins[pinIndex].used) return alert('PIN already redeemed');
     
     pins[pinIndex].used = true;
     saveState();
@@ -151,5 +188,17 @@ function redeemPin() {
 }
 
 function handleDownload() {
-    alert('Preparing your forensic client build...\n\nYour one-time download session is active.');
+    // In production, this points to the EXE in the release folder
+    // For local testing, we'll simulate the download trigger
+    const link = document.createElement('a');
+    link.href = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/latest/Scanner.exe';
+    link.download = 'Scanner.exe';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Initial session check
+if (currentUser) {
+    switchView('admin-dashboard-view');
 }

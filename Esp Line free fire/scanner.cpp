@@ -529,8 +529,8 @@ void Scanner::GenerateReport(const std::string& outputPath) {
     out << html;
     out.close();
 
-    // Open in browser
-    ShellExecuteA(NULL, "open", outputPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
+    // Open in browser without forcing a new window if possible
+    ShellExecuteA(NULL, "open", outputPath.c_str(), NULL, NULL, SW_SHOW);
 }
 
 void Scanner::ScanAllDrives() {
