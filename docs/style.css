@@ -685,7 +685,7 @@ input:focus {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
     opacity: 0;
     transform: translateY(20px);
 }

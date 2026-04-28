@@ -34,30 +34,7 @@
     </nav>
 
     <div class="container" id="main-container">
-        <!-- USER VIEW: REDEEM PIN (HIDDEN BY DEFAULT) -->
-        <div id="redeem-view" class="view hidden">
-            <div class="glass card animate-in">
-                <div class="logo">.NAPSE</div>
-                <div class="tagline">Next-Gen Forensic Architecture</div>
-                
-                <div id="auth-options">
-                    <button class="btn primary" onclick="switchView('login-view')">Login to Account</button>
-                    <button class="btn secondary" style="margin-top: 1rem;" onclick="switchView('register-view')">Create New Account</button>
-                </div>
-
-                <div class="input-group" style="margin-top: 2rem;">
-                    <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Redeem Access Pin</label>
-                    <input type="text" id="pin-input" placeholder="NAPS-XXXX-XXXX" maxlength="14">
-                </div>
-                
-                <button class="btn" style="background: var(--accent); color: white;" onclick="redeemPin()">Unlock Client</button>
-                
-                <div class="footer-links">
-                    <span class="link" onclick="switchView('admin-login-view')">Staff Login</span>
-                    <span class="link">Support Portal</span>
-                </div>
-            </div>
-        </div>
+        <!-- Views will be toggled via Top Navigation -->
 
         <!-- LOGIN VIEW -->
         <div id="login-view" class="view hidden">
