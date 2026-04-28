@@ -252,35 +252,35 @@ function verifyDownloadPin() {
 async function triggerClientDownload() {
     const btn = document.querySelector('.btn-dl');
     const originalText = btn.innerHTML;
-    btn.innerHTML = 'Binding PIN to EXE...';
+    btn.innerHTML = 'Connecting to Secure Server...';
     btn.disabled = true;
 
     try {
-        const response = await fetch('https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe');
-        if (!response.ok) throw new Error('Download failed');
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        
-        // Connect PIN to EXE name
+        // Direct link is more reliable for large binaries and avoids CORS issues
         const pin = window.lastVerifiedPin || 'GUEST';
         const fileName = `xereca_${pin}.exe`;
-        
+        const downloadUrl = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+
+        // Use a temporary link to trigger the download
         const a = document.createElement('a');
-        a.href = url;
+        a.href = downloadUrl;
         a.download = fileName;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
         
-        btn.innerHTML = 'Download Started';
         setTimeout(() => {
-            btn.innerHTML = 'Download Again';
-            btn.disabled = false;
-        }, 3000);
+            document.body.removeChild(a);
+            btn.innerHTML = 'Download Started';
+            setTimeout(() => {
+                btn.innerHTML = 'Download Again';
+                btn.disabled = false;
+            }, 3000);
+        }, 100);
+        
     } catch (err) {
-        alert('Connection failed. Please try again.');
+        console.error('Download Error:', err);
+        alert('Mirror 1 failed. Please try again or contact support.');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
