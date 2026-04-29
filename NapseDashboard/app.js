@@ -1,0 +1,494 @@
+// Database Simulation using localStorage
+let pins = JSON.parse(localStorage.getItem('napse_pins')) || [];
+let users = JSON.parse(localStorage.getItem('napse_users')) || [
+    { username: 'admin', password: '123', role: 'staff' }
+];
+let currentUser = JSON.parse(sessionStorage.getItem('napse_session')) || null;
+
+// Handle Shareable Links
+const urlParams = new URLSearchParams(window.location.search);
+const sharedPin = urlParams.get('pin');
+const reportData = urlParams.get('report');
+const transferPort = urlParams.get('transfer');
+
+if (transferPort) {
+    window.onload = async () => {
+        switchView('report-viewer-view');
+        const viewer = document.getElementById('report-viewer-content');
+        viewer.innerHTML = '<div class="empty-state">Securely fetching forensic data from local server...</div>';
+        
+        let attempts = 0;
+        let success = false;
+        let htmlContent = '';
+
+        while (attempts < 5 && !success) {
+            try {
+                const response = await fetch(`http://localhost:${transferPort}/report`);
+                if (response.ok) {
+                    htmlContent = await response.text();
+                    success = true;
+                }
+            } catch (err) {
+                attempts++;
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        if (success) {
+            viewer.innerHTML = htmlContent;
+            
+            // Auto-save to reports list
+            const reportId = 'REP-' + Math.floor(Math.random() * 100000);
+            const newReport = {
+                id: reportId,
+                name: 'Cloud_Report_' + new Date().getTime() + '.html',
+                content: htmlContent,
+                date: new Date().toLocaleString(),
+                owner: currentUser ? currentUser.username : 'Anonymous'
+            };
+            
+            let reportsArr = JSON.parse(localStorage.getItem('napse_reports')) || [];
+            reportsArr.push(newReport);
+            localStorage.setItem('napse_reports', JSON.stringify(reportsArr));
+        } else {
+            viewer.innerHTML = '<div class="empty-state">Data transfer timed out. Please run the scanner again.</div>';
+        }
+    };
+} else if (reportData) {
+    window.onload = () => {
+        const decoded = atob(reportData);
+        
+        // Auto-save to reports list
+        const reportId = 'REP-' + Math.floor(Math.random() * 100000);
+        const newReport = {
+            id: reportId,
+            name: 'Cloud_Report_' + new Date().getTime() + '.html',
+            content: decoded,
+            date: new Date().toLocaleString(),
+            owner: currentUser ? currentUser.username : 'Anonymous'
+        };
+        
+        let reportsList = JSON.parse(localStorage.getItem('napse_reports')) || [];
+        reportsList.push(newReport);
+        localStorage.setItem('napse_reports', JSON.stringify(reportsList));
+
+        const viewer = document.getElementById('report-viewer-content');
+        if (viewer) {
+            viewer.innerHTML = decoded;
+            switchView('report-viewer-view');
+        }
+    };
+} else if (sharedPin) {
+    window.onload = () => {
+        const pin = pins.find(p => p.key === sharedPin);
+        if (pin && pin.used) {
+            alert('This forensic link has expired.');
+            switchView('login-view');
+        } else {
+            switchView('download-verify-view');
+            document.getElementById('download-pin-input').value = sharedPin;
+        }
+    };
+}
+
+function saveState() {
+    localStorage.setItem('napse_pins', JSON.stringify(pins));
+    localStorage.setItem('napse_users', JSON.stringify(users));
+}
+
+// Matrix Animation Logic
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@&%*';
+const fontSize = 14;
+const columns = width / fontSize;
+const drops = [];
+
+for (let i = 0; i < columns; i++) {
+    drops[i] = 1;
+}
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(3, 3, 3, 0.05)';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#8b5cf6'; // Purple rain
+    ctx.font = fontSize + 'px JetBrains Mono';
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = characters.charAt(Math.floor(Math.random() * characters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 50);
+
+window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
+
+// View Switching Logic
+function switchView(viewId) {
+    console.log('Switching to view:', viewId);
+    
+    // Toggle Nav Visibility
+    const nav = document.getElementById('main-nav');
+    if (nav) {
+        nav.style.display = viewId === 'admin-dashboard-view' ? 'none' : 'flex';
+    }
+
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    const target = document.getElementById(viewId);
+    if (target) {
+        target.classList.remove('hidden');
+        if (viewId === 'admin-dashboard-view') {
+            renderPinList();
+            updateStats();
+            
+            // Only show reports tab to staff
+            const reportsTab = document.getElementById('reports-tab-btn');
+            if (reportsTab) {
+                reportsTab.style.display = currentUser.role === 'staff' ? 'block' : 'none';
+            }
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } else {
+        console.error('Target view not found:', viewId);
+    }
+}
+
+// Authentication Logic
+function handleRegister() {
+    const user = document.getElementById('reg-user').value.trim();
+    const pass = document.getElementById('reg-pass').value;
+    const confirm = document.getElementById('reg-pass-confirm').value;
+
+    if (!user || !pass) return alert('Please fill in all fields');
+    if (pass !== confirm) return alert('Passwords do not match');
+    if (users.find(u => u.username === user)) return alert('Username already exists');
+
+    users.push({ 
+        username: user, 
+        password: pass, 
+        role: 'user',
+        daily_count: 0,
+        last_gen_date: null
+    });
+    saveState();
+    alert('Account created! Please login.');
+    switchView('login-view');
+}
+
+function handleLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value;
+
+    const found = users.find(u => u.username === user && u.password === pass);
+    if (!found) return alert('Invalid credentials');
+
+    currentUser = found;
+    sessionStorage.setItem('napse_session', JSON.stringify(currentUser));
+    switchView('admin-dashboard-view');
+}
+
+// PIN Management with Daily Limit
+function generatePin() {
+    if (!currentUser) return;
+
+    // Check Daily Limit (2 Pins per day)
+    const today = new Date().toLocaleDateString();
+    const userIdx = users.findIndex(u => u.username === currentUser.username);
+    
+    if (users[userIdx].last_gen_date !== today) {
+        users[userIdx].daily_count = 0;
+        users[userIdx].last_gen_date = today;
+    }
+
+    if (users[userIdx].daily_count >= 2 && currentUser.role !== 'staff') {
+        return alert('Daily limit reached (2 PINs per day). Please return tomorrow.');
+    }
+
+    const segments = [];
+    for (let i = 0; i < 2; i++) {
+        segments.push(Math.random().toString(36).substring(2, 6).toUpperCase());
+    }
+    const newKey = `NAPS-${segments[0]}-${segments[1]}`;
+    
+    pins.push({
+        key: newKey,
+        used: false,
+        created: today,
+        owner: currentUser.username
+    });
+    
+    users[userIdx].daily_count++;
+    saveState();
+    renderPinList();
+    updateStats();
+
+    // Auto Download on Creation
+    setTimeout(() => {
+        handleDownload();
+    }, 1000);
+}
+
+function renderPinList() {
+    const tbody = document.getElementById('pin-list-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const visiblePins = currentUser.role === 'staff' 
+        ? pins 
+        : pins.filter(p => p.owner === currentUser.username);
+
+    visiblePins.slice().reverse().forEach(pin => {
+        const shareLink = `${window.location.origin}${window.location.pathname}?pin=${pin.key}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${pin.key}</td>
+            <td><span class="tag ${pin.used ? 'tag-used' : 'tag-active'}">${pin.used ? 'Used' : 'Active'}</span></td>
+            <td>${pin.created}</td>
+            <td style="display: flex; gap: 1rem; align-items: center;">
+                <button class="btn-sm" style="background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 0.4rem 0.8rem;" onclick="copyToClipboard('${shareLink}')">Copy Link</button>
+                ${pin.owner === currentUser.username || currentUser.role === 'staff' ? `<span class="link" style="font-size: 0.7rem;" onclick="deletePin('${pin.key}')">Remove</span>` : ''}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function copyToClipboard(text) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Shareable link copied to clipboard!');
+}
+
+function deletePin(key) {
+    pins = pins.filter(p => p.key !== key);
+    saveState();
+    renderPinList();
+    updateStats();
+}
+
+function updateStats() {
+    if (!currentUser) return;
+    const userPins = pins.filter(p => p.owner === currentUser.username || currentUser.role === 'staff');
+    document.getElementById('stat-total').innerText = userPins.length;
+    
+    // Statistics for reports
+    const visibleReports = currentUser.role === 'staff' ? reports : [];
+    document.getElementById('stat-reports').innerText = visibleReports.length;
+    
+    document.querySelector('.user-name').innerText = currentUser.username;
+}
+
+function redeemPin() {
+    const input = document.getElementById('pin-input').value.trim().toUpperCase();
+    const pinIndex = pins.findIndex(p => p.key === input);
+    
+    if (pinIndex === -1) return alert('Invalid PIN');
+    if (pins[pinIndex].used) return alert('This license key has already been used.');
+
+    saveState();
+    switchView('success-view');
+}
+
+function handleDownload() {
+    // Show verification view instead of immediate download
+    switchView('download-verify-view');
+}
+
+function verifyDownloadPin() {
+    const input = document.getElementById('download-pin-input').value.trim().toUpperCase();
+    const pinIndex = pins.findIndex(p => p.key === input);
+    
+    if (pinIndex === -1) return alert('Invalid Access Pin');
+    if (pins[pinIndex].used) {
+        alert('This license key has already been used.');
+        window.location.href = window.location.pathname; // Clear URL
+        return;
+    }
+    
+    // Store the verified pin globally
+    window.lastVerifiedPin = input;
+    
+    // Mark as used immediately after verification (single use model)
+    pins[pinIndex].used = true;
+    saveState();
+    
+    switchView('success-view');
+}
+
+async function triggerClientDownload() {
+    const btn = document.querySelector('.btn-dl');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Connecting to Secure Server...';
+    btn.disabled = true;
+
+    try {
+        // Direct link is more reliable for large binaries and avoids CORS issues
+        const pin = window.lastVerifiedPin || 'GUEST';
+        const fileName = `xereca_${pin}.exe`;
+        const downloadUrl = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.1/xereca.exe';
+
+        // Use a temporary link to trigger the download
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = fileName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+            btn.innerHTML = 'Download Started';
+            setTimeout(() => {
+                btn.innerHTML = 'Download Again';
+                btn.disabled = false;
+            }, 3000);
+        }, 100);
+        
+    } catch (err) {
+        console.error('Download Error:', err);
+        alert('Mirror 1 failed. Please try again or contact support.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Sidebar & Tab Management
+function switchTab(tabId) {
+    // Update Sidebar
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    // Update Workspace View
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    
+    // Update Header Text
+    const titles = {
+        'keys': { t: 'License Management', d: 'Manage and distribute system access keys.' },
+        'reports': { t: 'Forensic Intelligence', d: 'View and analyze scanned system data.' },
+        'settings': { t: 'System Settings', d: 'Configure your forensic workstation.' }
+    };
+    
+    document.getElementById('page-title').innerText = titles[tabId].t;
+    document.getElementById('page-desc').innerText = titles[tabId].d;
+
+    if (tabId === 'reports') renderReportsList();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function copyDirectLink() {
+    const directLink = 'https://github.com/SLECET7z/napse-forensic-scanner/releases/download/v1.0/xereca.exe';
+    navigator.clipboard.writeText(directLink).then(() => {
+        alert('Direct EXE link copied to clipboard!');
+    });
+}
+
+// Report Management
+let reports = JSON.parse(localStorage.getItem('napse_reports')) || [];
+
+function handleReportUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const report = {
+            id: 'REP-' + Math.floor(Math.random() * 100000),
+            name: file.name,
+            content: e.target.result,
+            date: new Date().toLocaleString(),
+            owner: currentUser.username
+        };
+        
+        reports.push(report);
+        localStorage.setItem('napse_reports', JSON.stringify(reports));
+        renderReportsList();
+        alert('Report uploaded successfully to dashboard!');
+    };
+    reader.readAsText(file);
+}
+
+async function renderReportsList() {
+    const grid = document.getElementById('reports-list');
+    if (!grid) return;
+    
+    // STRICT PRIVACY: Only staff can see reports
+    if (currentUser.role !== 'staff') {
+        grid.innerHTML = '<div class="empty-state">Access Denied. Access Level Alpha required.</div>';
+        return;
+    }
+
+    grid.innerHTML = '<div class="empty-state">Decrypting forensic data from cloud...</div>';
+
+    try {
+        const response = await fetch('https://api.github.com/repos/SLECET7z/napse-forensic-scanner/contents/reports');
+        if (!response.ok) throw new Error('Cloud Offline');
+        
+        const files = await response.json();
+        const htmlFiles = files.filter(f => f.name.endsWith('.html'));
+
+        if (htmlFiles.length === 0) {
+            grid.innerHTML = '<div class="empty-state">No forensic reports recovered from cloud.</div>';
+            return;
+        }
+
+        grid.innerHTML = '';
+        htmlFiles.slice().reverse().forEach(file => {
+            const card = document.createElement('div');
+            card.className = 'report-card animate-in';
+            card.onclick = () => window.open(file.download_url, '_blank');
+            card.innerHTML = `
+                <div class="report-icon"><i data-lucide="file-text"></i></div>
+                <div class="report-info">
+                    <div class="report-name">${file.name}</div>
+                    <div class="report-date">Cloud Stored Artifact</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--accent);">Verified Intelligence</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        // Update Stats
+        document.getElementById('stat-reports').innerText = htmlFiles.length;
+    } catch (err) {
+        console.error('Fetch Error:', err);
+        grid.innerHTML = '<div class="empty-state">Connection to Secure Vault failed. Check system logs.</div>';
+    }
+}
+
+function viewReport(reportId) {
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+    
+    // Open the report content in a new window/tab
+    const win = window.open('', '_blank');
+    win.document.write(report.content);
+    win.document.close();
+}
+
+// Initial session check
+if (currentUser) {
+    switchView('admin-dashboard-view');
+} else {
+    // Show nothing by default (just matrix background)
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+}

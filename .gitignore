@@ -1,0 +1,16 @@
+# Visual Studio
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+*.user
+*.suo
+*.db
+*.opendb
+
+# Misc
+*.exe
+*.dll
+*.pdb
+*.log
+!docs/*.exe
